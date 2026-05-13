@@ -1,7 +1,7 @@
 # Chez Nous
 
-Site statique de présentation pour un séjour chez l'habitant à Nantes (Saint-Joseph de Porterie), en lisière d'un bois Natura 2000.
+Static site for a guest stay in our home in Nantes (Saint-Joseph de Porterie), on the edge of a Natura 2000 woodland.
 
-Une chambre privative, terrasse et cuisine partagées, coworking au pied de l'immeuble. Calendrier de disponibilités intégré.
+One private bedroom, shared terrace and kitchen, coworking space downstairs. Availability calendar built in.
 
-HTML / CSS / JS vanilla — pas de back, pas de base de données.
+Plain HTML, CSS, JavaScript. No backend, no database.
