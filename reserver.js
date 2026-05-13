@@ -7,10 +7,12 @@
   ];
   const DOW_FR = ["L", "M", "M", "J", "V", "S", "D"];
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const PACKS = {
+    beaujoire: { label: "Soirée à la Beaujoire", price: 35 },
+    otaku:     { label: "Pack Otaku",            price: 25 },
+    cocooning: { label: "Soirée canapé",         price: 15 },
+  };
 
-  // Périodes indisponibles, en dur.
   const UNAVAILABLE_RANGES = [
     ["2026-06-29", "2026-07-06"],
     ["2026-07-13", "2026-07-19"],
@@ -18,18 +20,9 @@
     ["2026-09-01", "2026-09-14"],
     ["2026-12-21", "2027-01-04"],
   ];
-  const unavailable = new Set();
-  (function seedUnavailable() {
-    UNAVAILABLE_RANGES.forEach(([from, to]) => {
-      const a = fromKey(from);
-      const b = fromKey(to);
-      const d = new Date(a);
-      while (d <= b) {
-        unavailable.add(toKey(d));
-        d.setDate(d.getDate() + 1);
-      }
-    });
-  })();
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   function toKey(d) {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -44,13 +37,34 @@
   function nightsBetween(a, b) {
     return Math.round((b - a) / (1000 * 60 * 60 * 24));
   }
+  function sameDay(a, b) {
+    return a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  }
 
-  // --- State ---
+  const unavailable = new Set();
+  UNAVAILABLE_RANGES.forEach(([from, to]) => {
+    const d = fromKey(from);
+    const end = fromKey(to);
+    while (d <= end) {
+      unavailable.add(toKey(d));
+      d.setDate(d.getDate() + 1);
+    }
+  });
+
+  // --- Pre-fill from URL ---
+  const params = new URLSearchParams(window.location.search);
+  const preIn = params.get("in");
+  const preOut = params.get("out");
+
   const state = {
     cursor: new Date(today.getFullYear(), today.getMonth(), 1),
-    checkIn: null,
-    checkOut: null,
+    checkIn: preIn ? fromKey(preIn) : null,
+    checkOut: preOut ? fromKey(preOut) : null,
+    packs: new Set(),
   };
+  if (state.checkIn) {
+    state.cursor = new Date(state.checkIn.getFullYear(), state.checkIn.getMonth(), 1);
+  }
 
   // --- DOM ---
   const calendarEl = document.getElementById("calendar");
@@ -58,14 +72,26 @@
   const sumOut = document.getElementById("sum-out");
   const sumNights = document.getElementById("sum-nights");
   const sumTotal = document.getElementById("sum-total");
-  const submitBtn = document.getElementById("submit-btn");
-  const form = document.getElementById("booking-form");
+  const toStep2 = document.getElementById("to-step-2");
+  const backTo1 = document.getElementById("back-to-1");
+  const toStep3 = document.getElementById("to-step-3");
+  const backTo2 = document.getElementById("back-to-2");
+  const steps = [
+    document.getElementById("step-1"),
+    document.getElementById("step-2"),
+    document.getElementById("step-3"),
+  ];
+  const stepIndicators = document.querySelectorAll(".steps .step");
+  const packCards = document.querySelectorAll(".pack-card");
+  const confirmForm = document.getElementById("confirm-form");
+  const successEl = document.getElementById("success");
 
+  // --- Calendar ---
   function renderCalendar() {
     calendarEl.innerHTML = "";
     const m1 = new Date(state.cursor);
     const m2 = new Date(state.cursor.getFullYear(), state.cursor.getMonth() + 1, 1);
-    calendarEl.appendChild(buildMonth(m1, /* withPrev */ true, /* withNext */ false));
+    calendarEl.appendChild(buildMonth(m1, true, false));
     calendarEl.appendChild(buildMonth(m2, false, true));
   }
 
@@ -120,7 +146,6 @@
 
     const first = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
     const lastDay = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate();
-    // Monday-first offset.
     let offset = first.getDay() - 1;
     if (offset < 0) offset = 6;
     for (let i = 0; i < offset; i++) {
@@ -162,10 +187,6 @@
     return wrap;
   }
 
-  function sameDay(a, b) {
-    return a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-  }
-
   function rangeHasUnavailable(a, b) {
     const d = new Date(a);
     while (d <= b) {
@@ -194,67 +215,112 @@
     updateSummary();
   }
 
+  function nightsCount() {
+    if (!state.checkIn || !state.checkOut) return 0;
+    return nightsBetween(state.checkIn, state.checkOut);
+  }
+
+  function nightsSubtotal() {
+    return nightsCount() * NIGHT_PRICE;
+  }
+
+  function packsSubtotal() {
+    let s = 0;
+    state.packs.forEach((k) => { s += PACKS[k].price; });
+    return s;
+  }
+
   function updateSummary() {
+    const n = nightsCount();
     if (state.checkIn) {
       sumIn.textContent = fmtLong(state.checkIn);
     } else {
-      sumIn.textContent = "— sélectionnez une date —";
+      sumIn.textContent = "sélectionnez une date";
     }
     if (state.checkOut) {
       sumOut.textContent = fmtLong(state.checkOut);
-      const n = nightsBetween(state.checkIn, state.checkOut);
       sumNights.textContent = n;
-      sumTotal.textContent = `${(n * NIGHT_PRICE).toLocaleString("fr-FR")} €`;
-      submitBtn.disabled = n < MIN_NIGHTS;
-      submitBtn.textContent = n < MIN_NIGHTS
-        ? `Minimum ${MIN_NIGHTS} nuits`
-        : "Continuer la réservation";
+      sumTotal.textContent = `${nightsSubtotal().toLocaleString("fr-FR")} €`;
+      toStep2.disabled = n < MIN_NIGHTS;
+      toStep2.textContent = n < MIN_NIGHTS ? `Minimum ${MIN_NIGHTS} nuits` : "Suivant";
     } else {
       sumOut.textContent = "—";
       sumNights.textContent = "0";
       sumTotal.textContent = "0 €";
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Continuer la réservation";
+      toStep2.disabled = true;
+      toStep2.textContent = "Suivant";
     }
   }
 
-  // --- Form ---
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    if (submitBtn.disabled) return;
-    const params = new URLSearchParams({
-      in: toKey(state.checkIn),
-      out: toKey(state.checkOut),
+  // --- Steps ---
+  function goToStep(n) {
+    steps.forEach((el, i) => { el.hidden = (i !== n - 1); });
+    stepIndicators.forEach((el) => {
+      const s = Number(el.dataset.step);
+      el.classList.toggle("active", s === n);
+      el.classList.toggle("done", s < n);
     });
-    window.location.href = `reserver.html?${params.toString()}`;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  toStep2.addEventListener("click", () => {
+    if (toStep2.disabled) return;
+    goToStep(2);
+  });
+  backTo1.addEventListener("click", () => goToStep(1));
+  toStep3.addEventListener("click", () => {
+    renderRecap();
+    goToStep(3);
+  });
+  backTo2.addEventListener("click", () => goToStep(2));
+
+  packCards.forEach((card) => {
+    const cb = card.querySelector("input[type=checkbox]");
+    cb.addEventListener("change", () => {
+      const key = card.dataset.pack;
+      if (cb.checked) {
+        state.packs.add(key);
+        card.classList.add("selected");
+      } else {
+        state.packs.delete(key);
+        card.classList.remove("selected");
+      }
+    });
   });
 
-  // --- Nav scroll style ---
-  const nav = document.getElementById("nav");
-  const onScroll = () => {
-    if (window.scrollY > 60) nav.classList.add("scrolled");
-    else nav.classList.remove("scrolled");
-  };
-  window.addEventListener("scroll", onScroll, { passive: true });
-  onScroll();
+  // --- Recap ---
+  function renderRecap() {
+    document.getElementById("r-in").textContent = state.checkIn ? fmtLong(state.checkIn) : "—";
+    document.getElementById("r-out").textContent = state.checkOut ? fmtLong(state.checkOut) : "—";
+    const n = nightsCount();
+    document.getElementById("r-nights-label").textContent =
+      `${n} nuit${n > 1 ? "s" : ""} × ${NIGHT_PRICE} €`;
+    document.getElementById("r-nights-sub").textContent =
+      `${nightsSubtotal().toLocaleString("fr-FR")} €`;
 
-  // --- Reveal on scroll ---
-  const revealTargets = document.querySelectorAll(
-    ".intro, .split-text, .split-media, .gallery-grid figure, .around-grid article, .quote, .booking-shell"
-  );
-  revealTargets.forEach((el) => el.classList.add("reveal"));
-  const io = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("is-visible");
-          io.unobserve(entry.target);
-        }
-      });
-    },
-    { threshold: 0.12 }
-  );
-  revealTargets.forEach((el) => io.observe(el));
+    const packsWrap = document.getElementById("r-packs");
+    packsWrap.innerHTML = "";
+    state.packs.forEach((k) => {
+      const row = document.createElement("div");
+      row.className = "recap-row recap-pack";
+      row.innerHTML = `<span>${PACKS[k].label}</span><strong>+ ${PACKS[k].price} €</strong>`;
+      packsWrap.appendChild(row);
+    });
+
+    const sub = nightsSubtotal() + packsSubtotal();
+    document.getElementById("r-subtotal").textContent = `${sub.toLocaleString("fr-FR")} €`;
+    document.getElementById("r-strike").textContent = `${sub.toLocaleString("fr-FR")} €`;
+  }
+
+  // --- Confirm ---
+  confirmForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const data = new FormData(confirmForm);
+    if (!data.get("name") || !data.get("email")) return;
+    confirmForm.style.display = "none";
+    successEl.hidden = false;
+    successEl.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
 
   renderCalendar();
   updateSummary();

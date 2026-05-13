@@ -633,3 +633,207 @@ em { font-style: italic; color: var(--accent-2); }
     transition-duration: 0.001s !important;
   }
 }
+
+/* ---------- Reservation page ---------- */
+.reserver-page main.reserver-main {
+  padding-top: 96px;
+  padding-bottom: 80px;
+  background: var(--bg);
+  min-height: 100vh;
+}
+
+.steps {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  padding: 0 32px;
+  margin: 0 auto 48px;
+  flex-wrap: wrap;
+}
+.steps .step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+.steps .step span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--white);
+}
+.steps .step.active { color: var(--ink); }
+.steps .step.active span {
+  background: var(--accent);
+  color: var(--white);
+  border-color: var(--accent);
+}
+.steps .step.done span {
+  background: var(--accent-2);
+  color: var(--white);
+  border-color: var(--accent-2);
+}
+
+.step-panel { padding: 24px 0 40px; }
+.step-panel h1.display { margin-top: 8px; }
+
+.step-actions {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  margin-top: 36px;
+  flex-wrap: wrap;
+}
+
+/* Packs */
+.packs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+  max-width: var(--maxw);
+  margin: 36px auto 0;
+  padding: 0 32px;
+}
+.pack-card {
+  position: relative;
+  display: block;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 28px 26px 26px;
+  cursor: pointer;
+  transition: border-color .2s var(--ease), transform .2s var(--ease), box-shadow .2s var(--ease);
+}
+.pack-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(28, 31, 26, 0.06);
+}
+.pack-card input[type=checkbox] {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+.pack-card.selected {
+  border-color: var(--accent);
+  background: var(--bg-2);
+}
+.pack-tag {
+  display: inline-block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent-2);
+  background: var(--bg-2);
+  padding: 4px 10px;
+  border-radius: 2px;
+  margin-bottom: 16px;
+}
+.pack-card.selected .pack-tag {
+  background: var(--white);
+}
+.pack-card h3 {
+  font-family: "Cormorant Garamond", serif;
+  font-weight: 500;
+  font-size: 26px;
+  margin: 0 0 12px;
+  line-height: 1.2;
+}
+.pack-card p {
+  font-size: 15px;
+  color: var(--ink-2);
+  margin: 0 0 20px;
+  line-height: 1.55;
+}
+.pack-price {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--accent-2);
+}
+.pack-note {
+  margin-top: 24px;
+  color: var(--muted);
+}
+
+/* Recap */
+.recap {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 28px 32px;
+  margin: 36px auto 32px;
+  max-width: 640px;
+}
+.recap-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 15px;
+}
+.recap-row:last-of-type { border-bottom: 0; }
+.recap-row span { color: var(--muted); }
+.recap-row strong { font-weight: 500; color: var(--ink); }
+.recap-pack span { color: var(--ink-2); }
+.recap-subtotal {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  border-bottom: 0;
+}
+.recap-subtotal strong { font-size: 17px; }
+.recap-final {
+  margin-top: 4px;
+  padding-top: 18px;
+  border-top: 2px solid var(--ink);
+  font-family: "Cormorant Garamond", serif;
+}
+.recap-final span:first-child {
+  font-family: "Inter", sans-serif;
+  font-size: 15px;
+  color: var(--ink);
+}
+.final-prices {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.final-prices s {
+  color: var(--muted);
+  font-size: 18px;
+}
+.final-prices strong {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 32px;
+  font-weight: 500;
+  color: var(--accent-2);
+}
+.promo-note {
+  text-align: right;
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--gold);
+  font-style: italic;
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 900px) {
+  .packs-grid { grid-template-columns: 1fr; }
+  .steps { gap: 14px; }
+  .recap { padding: 22px; }
+}
