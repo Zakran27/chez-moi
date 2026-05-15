@@ -61,6 +61,7 @@
     checkIn: preIn ? fromKey(preIn) : null,
     checkOut: preOut ? fromKey(preOut) : null,
     packs: new Set(),
+    people: 2,
   };
   if (state.checkIn) {
     state.cursor = new Date(state.checkIn.getFullYear(), state.checkIn.getMonth(), 1);
@@ -71,8 +72,10 @@
   const sumIn = document.getElementById("sum-in");
   const sumOut = document.getElementById("sum-out");
   const sumNights = document.getElementById("sum-nights");
-  const sumTotal = document.getElementById("sum-total");
   const toStep2 = document.getElementById("to-step-2");
+  const peopleCountEl = document.getElementById("people-count");
+  const peopleMinus = document.getElementById("people-minus");
+  const peoplePlus = document.getElementById("people-plus");
   const backTo1 = document.getElementById("back-to-1");
   const toStep3 = document.getElementById("to-step-3");
   const backTo2 = document.getElementById("back-to-2");
@@ -240,13 +243,11 @@
     if (state.checkOut) {
       sumOut.textContent = fmtLong(state.checkOut);
       sumNights.textContent = n;
-      sumTotal.textContent = `${nightsSubtotal().toLocaleString("fr-FR")} €`;
       toStep2.disabled = n < MIN_NIGHTS;
       toStep2.textContent = n < MIN_NIGHTS ? `Minimum ${MIN_NIGHTS} nuits` : "Suivant";
     } else {
       sumOut.textContent = "—";
       sumNights.textContent = "0";
-      sumTotal.textContent = "0 €";
       toStep2.disabled = true;
       toStep2.textContent = "Suivant";
     }
@@ -310,13 +311,88 @@
     const sub = nightsSubtotal() + packsSubtotal();
     document.getElementById("r-subtotal").textContent = `${sub.toLocaleString("fr-FR")} €`;
     document.getElementById("r-strike").textContent = `${sub.toLocaleString("fr-FR")} €`;
+    document.getElementById("r-people").textContent = state.people;
+    document.querySelector(".recap-final strong").textContent = "0 €";
   }
+
+  // --- People picker ---
+  function renderPeople() {
+    peopleCountEl.textContent = state.people;
+    peopleMinus.disabled = state.people <= 1;
+    peoplePlus.disabled = state.people >= 8;
+  }
+  peopleMinus.addEventListener("click", () => {
+    if (state.people > 1) { state.people--; renderPeople(); }
+  });
+  peoplePlus.addEventListener("click", () => {
+    if (state.people < 8) { state.people++; renderPeople(); }
+  });
+  renderPeople();
+
+  // --- Travel conditional UI ---
+  const ticketBlock = document.getElementById("ticket-block");
+  const arrivalBlock = document.getElementById("arrival-block");
+  const arrivalLabel = document.getElementById("arrival-label");
+
+  confirmForm.addEventListener("change", (e) => {
+    if (e.target.name === "travel") {
+      const v = e.target.value;
+      if (v === "train" || v === "avion") {
+        ticketBlock.hidden = false;
+        arrivalLabel.textContent = v === "train"
+          ? "Heure d'arrivée à la gare"
+          : "Heure d'arrivée à l'aéroport";
+      } else {
+        ticketBlock.hidden = true;
+        arrivalBlock.hidden = true;
+        confirmForm.querySelectorAll("input[name=ticket]").forEach((i) => (i.checked = false));
+        confirmForm.querySelector("input[name=arrival]").value = "";
+      }
+    }
+    if (e.target.name === "ticket") {
+      arrivalBlock.hidden = e.target.value !== "oui";
+      if (e.target.value !== "oui") {
+        confirmForm.querySelector("input[name=arrival]").value = "";
+      }
+    }
+  });
 
   // --- Confirm ---
   confirmForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const data = new FormData(confirmForm);
-    if (!data.get("name") || !data.get("email")) return;
+    if (!data.get("name") || !data.get("email") || !data.get("travel")) return;
+
+    const travel = data.get("travel");
+    const ticket = data.get("ticket") || "";
+    const arrival = data.get("arrival") || "";
+    const packsList = Array.from(state.packs).map((k) => PACKS[k].label).join(", ") || "aucune";
+
+    const lines = [
+      `Nom: ${data.get("name")}`,
+      `Email: ${data.get("email")}`,
+      `Arrivée: ${state.checkIn ? fmtLong(state.checkIn) : "—"}`,
+      `Départ: ${state.checkOut ? fmtLong(state.checkOut) : "—"}`,
+      `Nuits: ${nightsCount()}`,
+      `Personnes: ${state.people}`,
+      `Expériences: ${packsList}`,
+      `Transport: ${travel}`,
+    ];
+    if (travel === "train" || travel === "avion") {
+      lines.push(`Billet déjà pris: ${ticket || "—"}`);
+      if (ticket === "oui") {
+        const where = travel === "train" ? "gare" : "aéroport";
+        lines.push(`Heure d'arrivée ${where}: ${arrival || "—"}`);
+      }
+    }
+    const note = data.get("note");
+    if (note) lines.push(`Mot: ${note}`);
+
+    const subject = `Réservation Chez Nous — ${data.get("name")}`;
+    const body = lines.join("\n");
+    const mailto = `mailto:tfb27@hotmail.fr?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailto;
+
     confirmForm.style.display = "none";
     successEl.hidden = false;
     successEl.scrollIntoView({ behavior: "smooth", block: "center" });

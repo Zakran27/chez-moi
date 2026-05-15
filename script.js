@@ -57,7 +57,6 @@
   const sumIn = document.getElementById("sum-in");
   const sumOut = document.getElementById("sum-out");
   const sumNights = document.getElementById("sum-nights");
-  const sumTotal = document.getElementById("sum-total");
   const submitBtn = document.getElementById("submit-btn");
   const form = document.getElementById("booking-form");
 
@@ -204,7 +203,6 @@
       sumOut.textContent = fmtLong(state.checkOut);
       const n = nightsBetween(state.checkIn, state.checkOut);
       sumNights.textContent = n;
-      sumTotal.textContent = `${(n * NIGHT_PRICE).toLocaleString("fr-FR")} €`;
       submitBtn.disabled = n < MIN_NIGHTS;
       submitBtn.textContent = n < MIN_NIGHTS
         ? `Minimum ${MIN_NIGHTS} nuits`
@@ -212,7 +210,6 @@
     } else {
       sumOut.textContent = "—";
       sumNights.textContent = "0";
-      sumTotal.textContent = "0 €";
       submitBtn.disabled = true;
       submitBtn.textContent = "Continuer la réservation";
     }

@@ -833,6 +833,97 @@ em { font-style: italic; color: var(--accent-2); }
   letter-spacing: 0.02em;
 }
 
+.people-picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 18px 0 14px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.people-label {
+  font-size: 14px;
+  color: var(--muted);
+}
+.people-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.people-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.people-btn:hover:not(:disabled) { background: var(--paper-2); }
+.people-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.people-count {
+  min-width: 24px;
+  text-align: center;
+  font-weight: 500;
+  font-size: 16px;
+}
+
+.travel-fieldset {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin: 4px 0;
+}
+.travel-fieldset legend {
+  padding: 0 8px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.travel-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+.travel-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: border-color 0.2s, background 0.2s;
+}
+.travel-opt input { accent-color: var(--accent-2); }
+.travel-opt:has(input:checked) {
+  border-color: var(--accent-2);
+  background: var(--paper-2);
+}
+.travel-ticket {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line);
+}
+.arrival-time {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+.arrival-time input {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+}
+
 @media (max-width: 900px) {
   .packs-grid { grid-template-columns: 1fr; }
   .steps { gap: 14px; }

@@ -40,7 +40,7 @@
           <p class="eyebrow center">Étape 1</p>
           <h1 class="display center">Choisissez vos dates.</h1>
           <p class="prose center">
-            Deux nuits minimum. 65&nbsp;€ par nuit pour deux, petit-déjeuner offert le premier matin.
+            Deux nuits minimum. Petit-déjeuner offert le premier matin.
           </p>
 
           <div class="booking-shell">
@@ -60,11 +60,17 @@
                   <dt>Nuits</dt>
                   <dd id="sum-nights">0</dd>
                 </div>
-                <div class="row-total">
-                  <dt>Sous-total</dt>
-                  <dd id="sum-total">0&nbsp;€</dd>
-                </div>
               </dl>
+
+              <div class="people-picker">
+                <span class="people-label">Nombre de personnes</span>
+                <div class="people-controls">
+                  <button type="button" class="people-btn" id="people-minus" aria-label="Moins">−</button>
+                  <span class="people-count" id="people-count">2</span>
+                  <button type="button" class="people-btn" id="people-plus" aria-label="Plus">+</button>
+                </div>
+              </div>
+
               <button type="button" class="btn btn-primary btn-block" id="to-step-2" disabled>
                 Suivant
               </button>
@@ -90,7 +96,6 @@
                 Un superbe match en Ligue&nbsp;2, contre le Red Star (fuck Kita).
                 Kebab chez Doré &amp; Grillé inclus avant le coup d'envoi.
               </p>
-              <div class="pack-price">+ 35&nbsp;€</div>
             </label>
 
             <label class="pack-card" data-pack="otaku">
@@ -100,7 +105,6 @@
               <p>
                 Gaming et animé en perspective. Jeu vidéo de votre choix sur grand écran, puis un shōnen à regarder ensemble. Sushi inclus.
               </p>
-              <div class="pack-price">+ 25&nbsp;€</div>
             </label>
 
             <label class="pack-card" data-pack="cocooning">
@@ -110,7 +114,6 @@
               <p>
                 Le canapé moelleux, un gros plaid, des tisanes et boissons chaudes à volonté. Pour les soirs où on ne veut rien faire d'autre.
               </p>
-              <div class="pack-price">+ 15&nbsp;€</div>
             </label>
           </div>
 
@@ -131,34 +134,6 @@
           <h1 class="display center">On y est presque.</h1>
           <p class="prose center">Vérifiez les détails avant de confirmer.</p>
 
-          <div class="recap">
-            <div class="recap-row">
-              <span>Arrivée</span>
-              <strong id="r-in">—</strong>
-            </div>
-            <div class="recap-row">
-              <span>Départ</span>
-              <strong id="r-out">—</strong>
-            </div>
-            <div class="recap-row">
-              <span id="r-nights-label">Nuits</span>
-              <strong id="r-nights-sub">0&nbsp;€</strong>
-            </div>
-            <div class="recap-packs" id="r-packs"></div>
-            <div class="recap-row recap-subtotal">
-              <span>Sous-total</span>
-              <strong id="r-subtotal">0&nbsp;€</strong>
-            </div>
-            <div class="recap-row recap-final">
-              <span>Total à régler</span>
-              <span class="final-prices">
-                <s id="r-strike">0&nbsp;€</s>
-                <strong>0&nbsp;€</strong>
-              </span>
-            </div>
-            <p class="promo-note">Promotion appliquée&nbsp;: ami ou famille.</p>
-          </div>
-
           <form class="booking-form" id="confirm-form" novalidate>
             <label>
               <span>Nom</span>
@@ -168,10 +143,81 @@
               <span>Email</span>
               <input type="email" name="email" required autocomplete="email" />
             </label>
+
+            <fieldset class="travel-fieldset">
+              <legend>Comment venez-vous&nbsp;?</legend>
+              <div class="travel-options">
+                <label class="travel-opt">
+                  <input type="radio" name="travel" value="train" required />
+                  <span>Train</span>
+                </label>
+                <label class="travel-opt">
+                  <input type="radio" name="travel" value="voiture" />
+                  <span>Voiture</span>
+                </label>
+                <label class="travel-opt">
+                  <input type="radio" name="travel" value="avion" />
+                  <span>Avion</span>
+                </label>
+              </div>
+
+              <div class="travel-ticket" id="ticket-block" hidden>
+                <p class="tiny">Votre billet est-il déjà pris&nbsp;?</p>
+                <div class="travel-options">
+                  <label class="travel-opt">
+                    <input type="radio" name="ticket" value="oui" />
+                    <span>Oui</span>
+                  </label>
+                  <label class="travel-opt">
+                    <input type="radio" name="ticket" value="non" />
+                    <span>Non, pas encore</span>
+                  </label>
+                </div>
+
+                <label class="arrival-time" id="arrival-block" hidden>
+                  <span id="arrival-label">Heure d'arrivée à la gare</span>
+                  <input type="time" name="arrival" />
+                </label>
+              </div>
+            </fieldset>
+
             <label>
               <span>Un petit mot ? (facultatif)</span>
               <textarea name="note" rows="3" placeholder="Anniversaire, escapade, soirée match…"></textarea>
             </label>
+
+            <div class="recap" id="recap">
+              <div class="recap-row">
+                <span>Arrivée</span>
+                <strong id="r-in">—</strong>
+              </div>
+              <div class="recap-row">
+                <span>Départ</span>
+                <strong id="r-out">—</strong>
+              </div>
+              <div class="recap-row">
+                <span id="r-nights-label">Nuits</span>
+                <strong id="r-nights-sub">0&nbsp;€</strong>
+              </div>
+              <div class="recap-row">
+                <span>Personnes</span>
+                <strong id="r-people">2</strong>
+              </div>
+              <div class="recap-packs" id="r-packs"></div>
+              <div class="recap-row recap-subtotal">
+                <span>Sous-total</span>
+                <strong id="r-subtotal">0&nbsp;€</strong>
+              </div>
+              <div class="recap-row recap-final">
+                <span>Total à régler</span>
+                <span class="final-prices">
+                  <s id="r-strike">0&nbsp;€</s>
+                  <strong>0&nbsp;€</strong>
+                </span>
+              </div>
+              <p class="promo-note">Allez comme vous êtes de la famille c'est gratuit&nbsp;;)</p>
+            </div>
+
             <div class="step-actions">
               <button type="button" class="btn btn-ghost" id="back-to-2">Retour</button>
               <button type="submit" class="btn btn-primary">Confirmer la réservation</button>
