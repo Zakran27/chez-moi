@@ -1,6 +1,6 @@
 (() => {
   const NIGHT_PRICE = 65;
-  const MIN_NIGHTS = 2;
+  const MIN_NIGHTS = 1;
   const MONTHS_FR = [
     "janvier", "février", "mars", "avril", "mai", "juin",
     "juillet", "août", "septembre", "octobre", "novembre", "décembre"
