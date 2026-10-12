@@ -11,6 +11,9 @@ tu peux les ajouter une par une sans rien casser.
 | `chambre.jpg`       | Section « Chez nous » + galerie          | Portrait OK           |
 | `coworking.jpg`     | Galerie                                  | Paysage               |
 | `bois.jpg`          | Galerie (forêt / vue fenêtre)            | Paysage               |
+| `bureau.jpg`        | Galerie (bureau / télétravail)           | Portrait OK           |
+| `coin-lecture.jpg`  | Galerie (coin lecture)                   | Portrait OK           |
+| `terrasse-2.jpg`    | Galerie (terrasse, salon de jardin)      | Portrait OK           |
 
 Taille recommandée : 2000 px sur le plus grand côté, JPG qualité 80,
 < 400 Ko par image (passe-les dans https://squoosh.app si besoin).
