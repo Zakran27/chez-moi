@@ -4,9 +4,17 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Réserver · Chez Nous</title>
-    <meta name="description" content="Parcours de réservation pour un séjour Chez Nous." />
+    <meta name="description" content="Choisissez vos dates pour un séjour Chez Nous, aux portes de Nantes." />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta property="og:title" content="Réserver un séjour chez nous" />
+    <meta property="og:image" content="https://chez-moi-woad.vercel.app/images/og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#2f3d24" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%234a5d3a'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%23b08a3e'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Inter:wght@300;400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Figtree:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
@@ -14,22 +22,16 @@
   <body class="reserver-page">
     <header class="nav scrolled" id="nav">
       <a class="brand" href="index.html">
-        <span class="brand-mark">·</span>
+        <span class="brand-mark" aria-hidden="true">·</span>
         <span class="brand-name">Chez&nbsp;Nous</span>
       </a>
-      <nav class="nav-links">
-        <a href="index.html#lieu">Le lieu</a>
-        <a href="index.html#chez-nous">Chez nous</a>
-        <a href="index.html#autour">Autour</a>
-        <a href="reserver.html" class="active">Réserver</a>
-      </nav>
-      <a class="nav-cta" href="index.html">Retour</a>
+      <a class="nav-cta nav-cta-always" href="index.html">Retour au site</a>
     </header>
 
     <main class="reserver-main">
       <div class="container narrow">
-        <ol class="steps" aria-label="Étapes">
-          <li class="step active" data-step="1"><span>1</span> Dates</li>
+        <ol class="steps" aria-label="Étapes de la réservation">
+          <li class="step active" data-step="1" aria-current="step"><span>1</span> Dates</li>
           <li class="step" data-step="2"><span>2</span> Expériences</li>
           <li class="step" data-step="3"><span>3</span> Confirmation</li>
         </ol>
@@ -37,39 +39,29 @@
 
       <section class="step-panel" id="step-1">
         <div class="container">
-          <p class="eyebrow center">Étape 1</p>
-          <h1 class="display center">Choisissez vos dates.</h1>
+          <h1 class="display center" tabindex="-1">Choisissez vos dates.</h1>
 
           <div class="booking-shell">
-            <div class="calendar" id="calendar" aria-label="Calendrier de disponibilité"></div>
-            <aside class="booking-summary">
+            <div class="calendar" id="calendar" role="group" aria-label="Calendrier de disponibilité"></div>
+            <aside class="booking-summary" aria-live="polite">
               <h3>Votre séjour</h3>
               <dl>
-                <div>
-                  <dt>Arrivée</dt>
-                  <dd id="sum-in">sélectionnez une date</dd>
-                </div>
-                <div>
-                  <dt>Départ</dt>
-                  <dd id="sum-out">—</dd>
-                </div>
-                <div>
-                  <dt>Nuits</dt>
-                  <dd id="sum-nights">0</dd>
-                </div>
+                <div><dt>Arrivée</dt><dd id="sum-in">choisissez une date</dd></div>
+                <div><dt>Départ</dt><dd id="sum-out">à choisir</dd></div>
+                <div><dt>Nuits</dt><dd id="sum-nights">0</dd></div>
               </dl>
 
               <div class="people-picker">
-                <span class="people-label">Nombre de personnes</span>
-                <div class="people-controls">
-                  <button type="button" class="people-btn" id="people-minus" aria-label="Moins">−</button>
-                  <span class="people-count" id="people-count">2</span>
-                  <button type="button" class="people-btn" id="people-plus" aria-label="Plus">+</button>
+                <span class="people-label" id="people-label">Nombre de personnes</span>
+                <div class="people-controls" role="group" aria-labelledby="people-label">
+                  <button type="button" class="people-btn" id="people-minus" aria-label="Une personne de moins">−</button>
+                  <span class="people-count" id="people-count" aria-live="polite">2</span>
+                  <button type="button" class="people-btn" id="people-plus" aria-label="Une personne de plus">+</button>
                 </div>
               </div>
 
               <button type="button" class="btn btn-primary btn-block" id="to-step-2" disabled>
-                Suivant
+                Choisir les expériences
               </button>
             </aside>
           </div>
@@ -78,58 +70,55 @@
 
       <section class="step-panel" id="step-2" hidden>
         <div class="container">
-          <p class="eyebrow center">Étape 2</p>
-          <h1 class="display center">Une expérience à vivre ?</h1>
+          <h1 class="display center" tabindex="-1">Une expérience à vivre&nbsp;?</h1>
           <p class="prose center">
-            Choisissez une ou plusieurs ambiances. Des créneaux vous seront proposés lors de votre séjour pour les réaliser.
+            Choisissez une ou plusieurs ambiances. Des créneaux vous seront proposés pendant votre
+            séjour pour les réaliser.
           </p>
 
           <div class="packs-grid">
             <label class="pack-card" data-pack="beaujoire">
               <input type="checkbox" name="pack" value="beaujoire" />
-              <div class="pack-tag">Divertissement</div>
+              <span class="pack-tag">Divertissement</span>
               <h3>Soirée à la Beaujoire</h3>
               <p>
-                Un superbe match en Ligue&nbsp;2, contre le Red Star (fuck Kita).
-                Kebab chez Doré &amp; Grillé inclus avant le coup d'envoi.
+                Un superbe match en Ligue&nbsp;2, contre le Red Star (fuck Kita). Kebab chez Doré
+                &amp; Grillé inclus avant le coup d'envoi.
               </p>
             </label>
 
             <label class="pack-card" data-pack="otaku">
               <input type="checkbox" name="pack" value="otaku" />
-              <div class="pack-tag">Divertissement</div>
+              <span class="pack-tag">Divertissement</span>
               <h3>Pack Otaku</h3>
               <p>
-                Gaming et animé en perspective. Jeu vidéo de votre choix sur grand écran, puis un shōnen à regarder ensemble. Sushi inclus.
+                Gaming et animé en perspective. Jeu vidéo de votre choix sur grand écran, puis un
+                shōnen à regarder ensemble. Sushi inclus.
               </p>
             </label>
 
             <label class="pack-card" data-pack="cocooning">
               <input type="checkbox" name="pack" value="cocooning" />
-              <div class="pack-tag">Cocooning</div>
+              <span class="pack-tag">Cocooning</span>
               <h3>Soirée canapé</h3>
               <p>
-                Le canapé moelleux, un gros plaid, des tisanes et boissons chaudes à volonté. Pour les soirs où on ne veut rien faire d'autre.
+                Le canapé moelleux, un gros plaid, des tisanes et boissons chaudes à volonté. Pour
+                les soirs où on ne veut rien faire d'autre.
               </p>
             </label>
           </div>
 
-          <p class="tiny center pack-note">
-            Plusieurs packs sont sélectionnables. Des dates vous seront proposées lors de votre séjour pour effectuer ces activités.
-          </p>
-
           <div class="step-actions">
-            <button type="button" class="btn btn-ghost" id="back-to-1">Retour</button>
-            <button type="button" class="btn btn-primary" id="to-step-3">Suivant</button>
+            <button type="button" class="btn btn-ghost" id="back-to-1">Retour aux dates</button>
+            <button type="button" class="btn btn-primary" id="to-step-3">Passer à la confirmation</button>
           </div>
         </div>
       </section>
 
       <section class="step-panel" id="step-3" hidden>
         <div class="container narrow">
-          <p class="eyebrow center">Étape 3</p>
-          <h1 class="display center">On y est presque.</h1>
-          <p class="prose center">Vérifiez les détails avant de confirmer.</p>
+          <h1 class="display center" tabindex="-1">On y est presque.</h1>
+          <p class="prose center">Vérifiez les détails, puis envoyez-nous votre demande par mail.</p>
 
           <form class="booking-form" id="confirm-form" novalidate>
             <label>
@@ -179,51 +168,48 @@
             </fieldset>
 
             <label>
-              <span>Un petit mot ? (facultatif)</span>
+              <span>Un petit mot&nbsp;? (facultatif)</span>
               <textarea name="note" rows="3" placeholder="Anniversaire, escapade, soirée match…"></textarea>
             </label>
 
             <div class="recap" id="recap">
-              <div class="recap-row">
-                <span>Arrivée</span>
-                <strong id="r-in">—</strong>
-              </div>
-              <div class="recap-row">
-                <span>Départ</span>
-                <strong id="r-out">—</strong>
-              </div>
-              <div class="recap-row">
-                <span id="r-nights-label">Nuits</span>
-                <strong id="r-nights-sub">0&nbsp;€</strong>
-              </div>
-              <div class="recap-row">
-                <span>Personnes</span>
-                <strong id="r-people">2</strong>
-              </div>
+              <div class="recap-row"><span>Arrivée</span><strong id="r-in">à choisir</strong></div>
+              <div class="recap-row"><span>Départ</span><strong id="r-out">à choisir</strong></div>
+              <div class="recap-row"><span id="r-nights-label">Nuits</span><strong id="r-nights-sub">0&nbsp;€</strong></div>
+              <div class="recap-row"><span>Personnes</span><strong id="r-people">2</strong></div>
               <div class="recap-packs" id="r-packs"></div>
-              <div class="recap-row recap-subtotal">
-                <span>Sous-total</span>
-                <strong id="r-subtotal">0&nbsp;€</strong>
-              </div>
+              <div class="recap-row recap-subtotal"><span>Sous-total</span><strong id="r-subtotal">0&nbsp;€</strong></div>
               <div class="recap-row recap-final">
                 <span>Total à régler</span>
-                <span class="final-prices">
-                  <s id="r-strike">0&nbsp;€</s>
-                  <strong>0&nbsp;€</strong>
-                </span>
+                <span class="final-prices"><s id="r-strike">0&nbsp;€</s><strong>0&nbsp;€</strong></span>
               </div>
               <p class="promo-note">Allez comme vous êtes de la famille c'est gratuit&nbsp;;)</p>
             </div>
 
+            <p class="form-error" id="form-error" role="alert" hidden></p>
+
             <div class="step-actions">
-              <button type="button" class="btn btn-ghost" id="back-to-2">Retour</button>
-              <button type="submit" class="btn btn-primary">Confirmer la réservation</button>
+              <button type="button" class="btn btn-ghost" id="back-to-2">Retour aux expériences</button>
+              <button type="submit" class="btn btn-primary">Envoyer ma demande par mail</button>
             </div>
           </form>
 
-          <p class="success" id="success" hidden>
-            Merci&nbsp;! Votre demande est enregistrée. On revient vers vous très vite.
-          </p>
+          <div class="sent" id="sent" tabindex="-1" hidden>
+            <h2 class="display">Dernière étape&nbsp;: envoyez le mail.</h2>
+            <p class="prose">
+              Votre messagerie s'ouvre avec la demande déjà écrite&nbsp;: il ne reste qu'à
+              l'envoyer. On revient vers vous très vite.
+            </p>
+            <p class="prose">
+              Rien ne s'est ouvert&nbsp;? <a id="sent-mailto" href="#">Rouvrir le mail</a>, ou
+              copiez le récapitulatif et envoyez-le à <strong>tfb27@hotmail.fr</strong>.
+            </p>
+            <pre class="sent-recap" id="sent-recap"></pre>
+            <div class="step-actions">
+              <button type="button" class="btn btn-ghost" id="edit-request">Modifier ma demande</button>
+              <button type="button" class="btn btn-primary" id="copy-recap">Copier le récapitulatif</button>
+            </div>
+          </div>
         </div>
       </section>
     </main>
@@ -232,24 +218,20 @@
       <div class="container footer-grid">
         <div>
           <p class="brand">
-            <span class="brand-mark">·</span>
+            <span class="brand-mark" aria-hidden="true">·</span>
             <span class="brand-name">Chez&nbsp;Nous</span>
           </p>
-          <p class="tiny">
-            Saint-Joseph de Porterie<br />
-            44300 Nantes
-          </p>
+          <p class="tiny">Saint-Joseph de Porterie<br />44300 Nantes</p>
         </div>
         <div>
-          <p class="tiny strong">Contact</p>
-          <p class="tiny">bonjour@chez-nous.fr</p>
+          <p class="tiny strong">Une question&nbsp;?</p>
+          <p class="tiny">Écrivez-nous un petit mot à la dernière étape.</p>
         </div>
       </div>
-      <p class="footer-bottom tiny">
-        © 2026 Chez Nous. Fait à Nantes, en lisière du bois.
-      </p>
+      <p class="footer-bottom tiny">© 2026 Chez Nous · Fait à Nantes, en lisière du bois.</p>
     </footer>
 
-    <script src="reserver.js"></script>
+    <script src="calendar.js" defer></script>
+    <script src="reserver.js" defer></script>
   </body>
 </html>

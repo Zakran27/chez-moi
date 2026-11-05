@@ -1,412 +1,182 @@
+// Page Réserver : dates (calendar.js) → expériences → demande envoyée par la messagerie de l'invité
+// (mailto prérempli, 100 % front). On ne peut pas savoir si le mail est parti : on le dit, et le
+// récap reste affiché avec un bouton Copier en secours.
 (() => {
+  const { fromKey, fmtLong, nightsBetween, mountCalendar } = window.ChezNous;
   const NIGHT_PRICE = 65;
-  const MIN_NIGHTS = 1;
-  const MONTHS_FR = [
-    "janvier", "février", "mars", "avril", "mai", "juin",
-    "juillet", "août", "septembre", "octobre", "novembre", "décembre"
-  ];
-  const DOW_FR = ["L", "M", "M", "J", "V", "S", "D"];
-
+  const BOOKING_EMAIL = "tfb27@hotmail.fr";
   const PACKS = {
     beaujoire: { label: "Soirée à la Beaujoire", price: 35 },
-    otaku:     { label: "Pack Otaku",            price: 25 },
-    cocooning: { label: "Soirée canapé",         price: 15 },
+    otaku: { label: "Pack Otaku", price: 25 },
+    cocooning: { label: "Soirée canapé", price: 15 },
   };
 
-  const UNAVAILABLE_RANGES = [
-    ["2026-06-05", "2026-06-12"],
-    ["2026-06-18", "2026-06-22"],
-    ["2026-06-26", "2026-06-28"],
-    ["2026-06-29", "2026-07-08"],
-    ["2026-07-13", "2026-07-22"],
-    ["2026-08-24", "2026-09-07"],
-    ["2026-10-16", "2026-10-18"],
-    ["2026-10-31", "2026-11-02"],
-    ["2026-11-06", "2026-11-12"],
-    ["2026-11-13", "2026-11-16"],
-    ["2026-11-23", "2026-11-23"],
-    ["2026-11-27", "2026-11-29"],
-    ["2026-12-21", "2027-01-04"],
-    ["2027-01-22", "2027-01-24"],
-  ];
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  function toKey(d) {
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  }
-  function fromKey(k) {
-    const [y, m, d] = k.split("-").map(Number);
-    return new Date(y, m - 1, d);
-  }
-  function fmtLong(d) {
-    return `${String(d.getDate()).padStart(2, "0")} ${MONTHS_FR[d.getMonth()]} ${d.getFullYear()}`;
-  }
-  function nightsBetween(a, b) {
-    return Math.round((b - a) / (1000 * 60 * 60 * 24));
-  }
-  function sameDay(a, b) {
-    return a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-  }
-
-  const unavailable = new Set();
-  UNAVAILABLE_RANGES.forEach(([from, to]) => {
-    const d = fromKey(from);
-    const end = fromKey(to);
-    while (d <= end) {
-      unavailable.add(toKey(d));
-      d.setDate(d.getDate() + 1);
-    }
-  });
-
-  // --- Pre-fill from URL ---
   const params = new URLSearchParams(window.location.search);
-  const preIn = params.get("in");
-  const preOut = params.get("out");
-
   const state = {
-    cursor: new Date(today.getFullYear(), today.getMonth(), 1),
-    checkIn: preIn ? fromKey(preIn) : null,
-    checkOut: preOut ? fromKey(preOut) : null,
+    checkIn: fromKey(params.get("in")),
+    checkOut: fromKey(params.get("out")),
     packs: new Set(),
     people: 2,
   };
-  if (state.checkIn) {
-    state.cursor = new Date(state.checkIn.getFullYear(), state.checkIn.getMonth(), 1);
-  }
+  const $ = (id) => document.getElementById(id);
+  const nights = () => (state.checkOut ? nightsBetween(state.checkIn, state.checkOut) : 0);
+  const euros = (n) => `${n.toLocaleString("fr-FR")} €`;
 
-  // --- DOM ---
-  const calendarEl = document.getElementById("calendar");
-  const sumIn = document.getElementById("sum-in");
-  const sumOut = document.getElementById("sum-out");
-  const sumNights = document.getElementById("sum-nights");
-  const toStep2 = document.getElementById("to-step-2");
-  const peopleCountEl = document.getElementById("people-count");
-  const peopleMinus = document.getElementById("people-minus");
-  const peoplePlus = document.getElementById("people-plus");
-  const backTo1 = document.getElementById("back-to-1");
-  const toStep3 = document.getElementById("to-step-3");
-  const backTo2 = document.getElementById("back-to-2");
-  const steps = [
-    document.getElementById("step-1"),
-    document.getElementById("step-2"),
-    document.getElementById("step-3"),
-  ];
-  const stepIndicators = document.querySelectorAll(".steps .step");
-  const packCards = document.querySelectorAll(".pack-card");
-  const confirmForm = document.getElementById("confirm-form");
-  const successEl = document.getElementById("success");
+  // --- Étape 1 : dates + personnes ---
+  const toStep2 = $("to-step-2");
+  mountCalendar($("calendar"), state, () => {
+    $("sum-in").textContent = state.checkIn ? fmtLong(state.checkIn) : "choisissez une date";
+    $("sum-out").textContent = state.checkOut ? fmtLong(state.checkOut) : "à choisir";
+    $("sum-nights").textContent = nights();
+    toStep2.disabled = !state.checkOut;
+  });
+  const renderPeople = () => {
+    $("people-count").textContent = state.people;
+    $("people-minus").disabled = state.people <= 1;
+    $("people-plus").disabled = state.people >= 8;
+  };
+  $("people-minus").addEventListener("click", () => { state.people--; renderPeople(); });
+  $("people-plus").addEventListener("click", () => { state.people++; renderPeople(); });
+  renderPeople();
 
-  // --- Calendar ---
-  function renderCalendar() {
-    calendarEl.innerHTML = "";
-    const m1 = new Date(state.cursor);
-    const m2 = new Date(state.cursor.getFullYear(), state.cursor.getMonth() + 1, 1);
-    calendarEl.appendChild(buildMonth(m1, true, false));
-    calendarEl.appendChild(buildMonth(m2, false, true));
-  }
-
-  function buildMonth(monthDate, withPrev, withNext) {
-    const wrap = document.createElement("div");
-    wrap.className = "cal-month";
-
-    const head = document.createElement("div");
-    head.className = "cal-head";
-
-    const prev = document.createElement("button");
-    prev.className = "cal-nav";
-    prev.type = "button";
-    prev.innerHTML = "‹";
-    prev.setAttribute("aria-label", "Mois précédent");
-    if (!withPrev) prev.style.visibility = "hidden";
-    const minCursor = new Date(today.getFullYear(), today.getMonth(), 1);
-    if (state.cursor <= minCursor) prev.disabled = true;
-    prev.addEventListener("click", () => {
-      state.cursor = new Date(state.cursor.getFullYear(), state.cursor.getMonth() - 1, 1);
-      renderCalendar();
-    });
-
-    const title = document.createElement("div");
-    title.className = "cal-title";
-    title.textContent = `${MONTHS_FR[monthDate.getMonth()]} ${monthDate.getFullYear()}`;
-
-    const next = document.createElement("button");
-    next.className = "cal-nav";
-    next.type = "button";
-    next.innerHTML = "›";
-    next.setAttribute("aria-label", "Mois suivant");
-    if (!withNext) next.style.visibility = "hidden";
-    next.addEventListener("click", () => {
-      state.cursor = new Date(state.cursor.getFullYear(), state.cursor.getMonth() + 1, 1);
-      renderCalendar();
-    });
-
-    head.appendChild(prev);
-    head.appendChild(title);
-    head.appendChild(next);
-    wrap.appendChild(head);
-
-    const grid = document.createElement("div");
-    grid.className = "cal-grid";
-    DOW_FR.forEach((d) => {
-      const el = document.createElement("div");
-      el.className = "cal-dow";
-      el.textContent = d;
-      grid.appendChild(el);
-    });
-
-    const first = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
-    const lastDay = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate();
-    let offset = first.getDay() - 1;
-    if (offset < 0) offset = 6;
-    for (let i = 0; i < offset; i++) {
-      const empty = document.createElement("div");
-      empty.className = "cal-day empty";
-      grid.appendChild(empty);
-    }
-    for (let day = 1; day <= lastDay; day++) {
-      const d = new Date(monthDate.getFullYear(), monthDate.getMonth(), day);
-      const key = toKey(d);
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "cal-day";
-      btn.textContent = day;
-      btn.dataset.key = key;
-
-      if (d < today) {
-        btn.classList.add("past");
-        btn.disabled = true;
-      } else if (unavailable.has(key)) {
-        btn.classList.add("unavailable");
-        btn.disabled = true;
-      } else {
-        btn.classList.add("available");
-        btn.addEventListener("click", () => onDayClick(d));
-      }
-
-      if (state.checkIn && state.checkOut) {
-        if (d >= state.checkIn && d <= state.checkOut) btn.classList.add("in-range");
-        if (sameDay(d, state.checkIn)) btn.classList.add("range-start");
-        if (sameDay(d, state.checkOut)) btn.classList.add("range-end");
-      } else if (state.checkIn && sameDay(d, state.checkIn)) {
-        btn.classList.add("selected");
-      }
-
-      grid.appendChild(btn);
-    }
-    wrap.appendChild(grid);
-    return wrap;
-  }
-
-  function rangeHasUnavailable(a, b) {
-    const d = new Date(a);
-    while (d <= b) {
-      if (unavailable.has(toKey(d))) return true;
-      d.setDate(d.getDate() + 1);
-    }
-    return false;
-  }
-
-  function onDayClick(d) {
-    if (!state.checkIn || (state.checkIn && state.checkOut)) {
-      state.checkIn = d;
-      state.checkOut = null;
-    } else if (d <= state.checkIn) {
-      state.checkIn = d;
-      state.checkOut = null;
-    } else {
-      if (rangeHasUnavailable(new Date(state.checkIn.getTime() + 86400000), d)) {
-        state.checkIn = d;
-        state.checkOut = null;
-      } else {
-        state.checkOut = d;
-      }
-    }
-    renderCalendar();
-    updateSummary();
-  }
-
-  function nightsCount() {
-    if (!state.checkIn || !state.checkOut) return 0;
-    return nightsBetween(state.checkIn, state.checkOut);
-  }
-
-  function nightsSubtotal() {
-    return nightsCount() * NIGHT_PRICE;
-  }
-
-  function packsSubtotal() {
-    let s = 0;
-    state.packs.forEach((k) => { s += PACKS[k].price; });
-    return s;
-  }
-
-  function updateSummary() {
-    const n = nightsCount();
-    if (state.checkIn) {
-      sumIn.textContent = fmtLong(state.checkIn);
-    } else {
-      sumIn.textContent = "sélectionnez une date";
-    }
-    if (state.checkOut) {
-      sumOut.textContent = fmtLong(state.checkOut);
-      sumNights.textContent = n;
-      toStep2.disabled = n < MIN_NIGHTS;
-      toStep2.textContent = n < MIN_NIGHTS ? `Minimum ${MIN_NIGHTS} nuits` : "Suivant";
-    } else {
-      sumOut.textContent = "—";
-      sumNights.textContent = "0";
-      toStep2.disabled = true;
-      toStep2.textContent = "Suivant";
-    }
-  }
-
-  // --- Steps ---
+  // --- Navigation entre étapes ---
+  const steps = [$("step-1"), $("step-2"), $("step-3")];
   function goToStep(n) {
-    steps.forEach((el, i) => { el.hidden = (i !== n - 1); });
-    stepIndicators.forEach((el) => {
+    steps.forEach((el, i) => (el.hidden = i !== n - 1));
+    document.querySelectorAll(".steps .step").forEach((el) => {
       const s = Number(el.dataset.step);
       el.classList.toggle("active", s === n);
       el.classList.toggle("done", s < n);
+      if (s === n) el.setAttribute("aria-current", "step");
+      else el.removeAttribute("aria-current");
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
+    steps[n - 1].querySelector("h1").focus({ preventScroll: true });
   }
+  toStep2.addEventListener("click", () => state.checkOut && goToStep(2));
+  $("back-to-1").addEventListener("click", () => goToStep(1));
+  $("to-step-3").addEventListener("click", () => { renderRecap(); goToStep(3); });
+  $("back-to-2").addEventListener("click", () => goToStep(2));
 
-  toStep2.addEventListener("click", () => {
-    if (toStep2.disabled) return;
-    goToStep(2);
-  });
-  backTo1.addEventListener("click", () => goToStep(1));
-  toStep3.addEventListener("click", () => {
-    renderRecap();
-    goToStep(3);
-  });
-  backTo2.addEventListener("click", () => goToStep(2));
-
-  packCards.forEach((card) => {
+  // --- Étape 2 : expériences ---
+  document.querySelectorAll(".pack-card").forEach((card) => {
     const cb = card.querySelector("input[type=checkbox]");
     cb.addEventListener("change", () => {
-      const key = card.dataset.pack;
-      if (cb.checked) {
-        state.packs.add(key);
-        card.classList.add("selected");
-      } else {
-        state.packs.delete(key);
-        card.classList.remove("selected");
-      }
+      state.packs[cb.checked ? "add" : "delete"](card.dataset.pack);
+      card.classList.toggle("selected", cb.checked);
     });
   });
 
-  // --- Recap ---
+  // --- Étape 3 : récap ---
   function renderRecap() {
-    document.getElementById("r-in").textContent = state.checkIn ? fmtLong(state.checkIn) : "—";
-    document.getElementById("r-out").textContent = state.checkOut ? fmtLong(state.checkOut) : "—";
-    const n = nightsCount();
-    document.getElementById("r-nights-label").textContent =
-      `${n} nuit${n > 1 ? "s" : ""} × ${NIGHT_PRICE} €`;
-    document.getElementById("r-nights-sub").textContent =
-      `${nightsSubtotal().toLocaleString("fr-FR")} €`;
-
-    const packsWrap = document.getElementById("r-packs");
-    packsWrap.innerHTML = "";
-    state.packs.forEach((k) => {
-      const row = document.createElement("div");
-      row.className = "recap-row recap-pack";
-      row.innerHTML = `<span>${PACKS[k].label}</span><strong>+ ${PACKS[k].price} €</strong>`;
-      packsWrap.appendChild(row);
-    });
-
-    const sub = nightsSubtotal() + packsSubtotal();
-    document.getElementById("r-subtotal").textContent = `${sub.toLocaleString("fr-FR")} €`;
-    document.getElementById("r-strike").textContent = `${sub.toLocaleString("fr-FR")} €`;
-    document.getElementById("r-people").textContent = state.people;
-    document.querySelector(".recap-final strong").textContent = "0 €";
+    const n = nights();
+    const packsTotal = [...state.packs].reduce((s, k) => s + PACKS[k].price, 0);
+    $("r-in").textContent = state.checkIn ? fmtLong(state.checkIn) : "à choisir";
+    $("r-out").textContent = state.checkOut ? fmtLong(state.checkOut) : "à choisir";
+    $("r-nights-label").textContent = `${n} nuit${n > 1 ? "s" : ""} × ${NIGHT_PRICE} €`;
+    $("r-nights-sub").textContent = euros(n * NIGHT_PRICE);
+    $("r-people").textContent = state.people;
+    $("r-packs").replaceChildren(
+      ...[...state.packs].map((k) => {
+        const row = document.createElement("div");
+        row.className = "recap-row recap-pack";
+        const label = document.createElement("span");
+        label.textContent = PACKS[k].label;
+        const price = document.createElement("strong");
+        price.textContent = `+ ${PACKS[k].price} €`;
+        row.append(label, price);
+        return row;
+      })
+    );
+    $("r-subtotal").textContent = euros(n * NIGHT_PRICE + packsTotal);
+    $("r-strike").textContent = euros(n * NIGHT_PRICE + packsTotal);
   }
 
-  // --- People picker ---
-  function renderPeople() {
-    peopleCountEl.textContent = state.people;
-    peopleMinus.disabled = state.people <= 1;
-    peoplePlus.disabled = state.people >= 8;
-  }
-  peopleMinus.addEventListener("click", () => {
-    if (state.people > 1) { state.people--; renderPeople(); }
-  });
-  peoplePlus.addEventListener("click", () => {
-    if (state.people < 8) { state.people++; renderPeople(); }
-  });
-  renderPeople();
-
-  // --- Travel conditional UI ---
-  const ticketBlock = document.getElementById("ticket-block");
-  const arrivalBlock = document.getElementById("arrival-block");
-  const arrivalLabel = document.getElementById("arrival-label");
-
-  confirmForm.addEventListener("change", (e) => {
+  // --- Transport : billet et heure d'arrivée seulement en train / avion ---
+  const form = $("confirm-form");
+  form.addEventListener("change", (e) => {
     if (e.target.name === "travel") {
       const v = e.target.value;
-      if (v === "train" || v === "avion") {
-        ticketBlock.hidden = false;
-        arrivalLabel.textContent = v === "train"
-          ? "Heure d'arrivée à la gare"
-          : "Heure d'arrivée à l'aéroport";
-      } else {
-        ticketBlock.hidden = true;
-        arrivalBlock.hidden = true;
-        confirmForm.querySelectorAll("input[name=ticket]").forEach((i) => (i.checked = false));
-        confirmForm.querySelector("input[name=arrival]").value = "";
+      $("ticket-block").hidden = v !== "train" && v !== "avion";
+      $("arrival-label").textContent =
+        v === "train" ? "Heure d'arrivée à la gare" : "Heure d'arrivée à l'aéroport";
+      if ($("ticket-block").hidden) {
+        $("arrival-block").hidden = true;
+        form.querySelectorAll("input[name=ticket]").forEach((i) => (i.checked = false));
+        form.elements.arrival.value = "";
       }
     }
     if (e.target.name === "ticket") {
-      arrivalBlock.hidden = e.target.value !== "oui";
-      if (e.target.value !== "oui") {
-        confirmForm.querySelector("input[name=arrival]").value = "";
-      }
+      $("arrival-block").hidden = e.target.value !== "oui";
+      if (e.target.value !== "oui") form.elements.arrival.value = "";
     }
   });
 
-  // --- Confirm ---
-  confirmForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const data = new FormData(confirmForm);
-    if (!data.get("name") || !data.get("email") || !data.get("travel")) return;
-
+  // --- Envoi ---
+  function bookingFields(data) {
     const travel = data.get("travel");
-    const ticket = data.get("ticket") || "";
-    const arrival = data.get("arrival") || "";
-    const packsList = Array.from(state.packs).map((k) => PACKS[k].label).join(", ") || "aucune";
-
-    const lines = [
-      `Nom: ${data.get("name")}`,
-      `Email: ${data.get("email")}`,
-      `Arrivée: ${state.checkIn ? fmtLong(state.checkIn) : "—"}`,
-      `Départ: ${state.checkOut ? fmtLong(state.checkOut) : "—"}`,
-      `Nuits: ${nightsCount()}`,
-      `Personnes: ${state.people}`,
-      `Expériences: ${packsList}`,
-      `Transport: ${travel}`,
-    ];
+    const fields = {
+      Nom: data.get("name").trim(),
+      Email: data.get("email").trim(),
+      Arrivée: fmtLong(state.checkIn),
+      Départ: fmtLong(state.checkOut),
+      Nuits: nights(),
+      Personnes: state.people,
+      Expériences: [...state.packs].map((k) => PACKS[k].label).join(", ") || "aucune",
+      Transport: travel,
+    };
     if (travel === "train" || travel === "avion") {
-      lines.push(`Billet déjà pris: ${ticket || "—"}`);
-      if (ticket === "oui") {
-        const where = travel === "train" ? "gare" : "aéroport";
-        lines.push(`Heure d'arrivée ${where}: ${arrival || "—"}`);
-      }
+      fields["Billet déjà pris"] = data.get("ticket") || "pas précisé";
+      if (data.get("ticket") === "oui") fields["Heure d'arrivée"] = data.get("arrival") || "pas précisée";
     }
-    const note = data.get("note");
-    if (note) lines.push(`Mot: ${note}`);
+    if (data.get("note")) fields.Mot = data.get("note").trim();
+    return fields;
+  }
 
-    const subject = `Réservation Chez Nous — ${data.get("name")}`;
-    const body = lines.join("\n");
-    const mailto = `mailto:tfb27@hotmail.fr?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  function fieldError(msg) {
+    const err = $("form-error");
+    err.textContent = msg;
+    err.hidden = !msg;
+  }
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const data = new FormData(form);
+    const missing = [
+      !data.get("name")?.trim() && "votre nom",
+      !form.elements.email.checkValidity() || !data.get("email") ? "un email valide" : null,
+      !data.get("travel") && "votre moyen de transport",
+    ].filter(Boolean);
+    if (!state.checkOut) missing.unshift("vos dates (étape 1)");
+    if (missing.length) {
+      fieldError(`Il manque ${missing.join(", ")}.`);
+      return;
+    }
+    fieldError("");
+
+    const fields = bookingFields(data);
+    const subject = `Réservation Chez Nous : ${fields.Nom}, du ${fields.Arrivée} au ${fields.Départ}`;
+    const body = Object.entries(fields).map(([k, v]) => `${k} : ${v}`).join("\n");
+    const mailto = `mailto:${BOOKING_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+    $("sent-recap").textContent = `${subject}\n\n${body}`;
+    $("sent-mailto").href = mailto;
+    form.hidden = true;
+    $("sent").hidden = false;
+    $("sent").focus();
     window.location.href = mailto;
-
-    confirmForm.style.display = "none";
-    successEl.hidden = false;
-    successEl.scrollIntoView({ behavior: "smooth", block: "center" });
   });
 
-  renderCalendar();
-  updateSummary();
+  $("copy-recap").addEventListener("click", async (e) => {
+    try {
+      await navigator.clipboard.writeText(`${BOOKING_EMAIL}\n\n${$("sent-recap").textContent}`);
+      e.target.textContent = "Récapitulatif copié";
+    } catch {
+      e.target.textContent = "Copie impossible : sélectionnez le texte";
+    }
+  });
+  $("edit-request").addEventListener("click", () => {
+    $("sent").hidden = true;
+    form.hidden = false;
+  });
 })();
